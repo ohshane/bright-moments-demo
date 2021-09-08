@@ -1,5 +1,6 @@
 from flask import Flask, render_template, Response, request, session
 import cv2
+import time
 from werkzeug.utils import redirect
 from annotation import detectAndDisplay
 
@@ -15,6 +16,7 @@ def gen_frames(camera):
         print('--(!)Error opening video capture')
         exit(0)
     while True:
+        time.sleep(0.1)
         success, frame = camera.read()
         if not success:
             print('--(!) No captured frame -- Break!')
@@ -41,6 +43,8 @@ def register():
         global uri, name
         uri = request.values.get('uri')
         name = request.values.get('name')
+        if uri == '0':
+            uri = 0
         return redirect('/')
     return render_template('register.html')
 
