@@ -26,3 +26,6 @@ buffer.tobytes()
 ```
 
 ### [Reference](https://blog.miguelgrinberg.com/post/video-streaming-with-flask)
+
+
+https://github.com/WuJie1010/Facial-Expression-Recognition.Pytorch
