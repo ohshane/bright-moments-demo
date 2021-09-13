@@ -1,6 +1,7 @@
 from flask import Flask, render_template, Response, request, session
 from werkzeug.utils import redirect
 from pathlib import Path
+import time
 
 from PIL import Image
 import cv2
@@ -8,13 +9,13 @@ import torch
 from torchvision.transforms import transforms
 
 from annotation import detectAndDisplay
-from model.FER2013_VGG19 import VGG
+from model.FER2013_VGG19.VGG import VGG
 
 app = Flask(__name__)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = VGG()
-checkpoint = Path(__file__).parent / "FER2013_VGG19" / "PrivateTest_model.t7"
+model = VGG('VGG16')
+checkpoint = Path(__file__).parent / "model" / "FER2013_VGG19" / "PrivateTest_model.t7"
 model.load_state_dict(torch.load(checkpoint, map_location=device), strict=False)
 trans = transforms.Compose([
     transforms.Resize((48, 48)),   
