@@ -80,7 +80,28 @@ def gen_frames(camera):
             _, predicted = torch.max(outputs_avg.data, 0)
             score = score.tolist()
             score = list(map(lambda x: '{:.3f}'.format(x), score))
-            print(f"score: {score}\npredicted: {class_names[predicted]}")
+
+            # font
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            
+            # org
+            org = (50, 50)
+            
+            # fontScale
+            fontScale = 0.7
+            
+            # Blue color in BGR
+            color = (255, 255, 255)
+            
+            # Line thickness of 2 px
+            thickness = 2
+
+            if class_names[predicted] == 'Happy':
+                color = (50, 255, 50)
+            
+            cv2.putText(frame, ' '.join(score), org, font, fontScale, color, thickness, cv2.LINE_AA)
+
+            # print(f"score: {score}\npredicted: {class_names[predicted]}")
 
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
