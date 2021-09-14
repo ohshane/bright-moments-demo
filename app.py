@@ -2,10 +2,15 @@ from flask import Flask, render_template, Response, request, session
 from werkzeug.utils import redirect
 from pathlib import Path
 import time
+from pathlib import Path
+import os
 
 from PIL import Image
+import numpy as np
 import cv2
 import torch
+import torch.nn.functional as F
+from torch.autograd import Variable
 from torchvision.transforms import transforms
 
 from annotation import detectAndDisplay
@@ -14,7 +19,7 @@ from model.FER2013_VGG19.VGG import VGG
 app = Flask(__name__)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = VGG('VGG16')
+model = VGG('VGG19')
 checkpoint = Path(__file__).parent / "model" / "FER2013_VGG19" / "PrivateTest_model.t7"
 model.load_state_dict(torch.load(checkpoint, map_location=device), strict=False)
 trans = transforms.Compose([
@@ -26,6 +31,23 @@ uri = None
 name = None
 
 camera = cv2.VideoCapture(uri)
+
+root_dir = Path(__file__).parent
+
+cut_size = 44
+
+class_names = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+
+transform_test = transforms.Compose([
+    transforms.TenCrop(cut_size),
+    transforms.Lambda(lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops])),
+])
+
+net = VGG('VGG19')
+checkpoint = torch.load(root_dir / 'model' / 'FER2013_VGG19' / 'PrivateTest_model.t7')
+net.load_state_dict(checkpoint['net'])
+net.cuda()
+net.eval()
 
 def gen_frames(camera):
     if not camera.isOpened:
@@ -40,7 +62,25 @@ def gen_frames(camera):
 
         frame, faceROI = detectAndDisplay(frame)
         if faceROI is not None:
-            faceROI = cv2.resize(faceROI, dsize=(48, 48), interpolation=cv2.INTER_LINEAR)
+            faceROI = cv2.resize(faceROI, dsize=(48, 48), interpolation=cv2.INTER_LINEAR).astype(np.uint8)
+            faceROI = faceROI[:, :, np.newaxis]
+            faceROI = np.concatenate((faceROI, faceROI, faceROI), axis=2)
+            faceROI = Image.fromarray(faceROI)
+            inputs = transform_test(faceROI)
+
+            ncrops, c, h, w = np.shape(inputs)
+
+            inputs = inputs.view(-1, c, h, w)
+            inputs = inputs.cuda()
+            inputs = Variable(inputs, volatile=True)
+            outputs = net(inputs)
+            outputs_avg = outputs.view(ncrops, -1).mean(0)
+
+            score = F.softmax(outputs_avg)
+            _, predicted = torch.max(outputs_avg.data, 0)
+            score = score.tolist()
+            score = list(map(lambda x: '{:.3f}'.format(x), score))
+            print(f"score: {score}\npredicted: {class_names[predicted]}")
 
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
