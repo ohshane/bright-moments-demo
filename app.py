@@ -31,6 +31,7 @@ uri = None
 name = None
 
 camera = cv2.VideoCapture(uri)
+# uri: http://192.168.0.44:81/stream
 
 root_dir = Path(__file__).parent
 
