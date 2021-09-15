@@ -10,9 +10,9 @@ def detectAndDisplay(frame):
     faces = face_cascade.detectMultiScale(frame_gray)
     faceROI = None
     for (x,y,w,h) in faces:
-        frame = cv.rectangle(frame, (x, y), (x+w, y+h), (0,255,0), 1)
+        # frame = cv.rectangle(frame, (x, y), (x+w, y+h), (0,255,0), 1)
         faceROI = frame_gray[y:y+h,x:x+w]
-    return frame, faceROI
+    return frame, faceROI, faces
     
 parser = argparse.ArgumentParser(description='Code for Cascade Classifier tutorial.')
 parser.add_argument('--face_cascade', help='Path to face cascade.', default='data/haarcascades/haarcascade_frontalface_alt.xml')

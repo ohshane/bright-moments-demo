@@ -53,7 +53,21 @@ net.eval()
 frames = []
 temp_frame = None
 
+# cv2.putText
+# font = cv2.FONT_HERSHEY_SIMPLEX     
+# org = [10, 50]
+# fontScale = 0.7
+# color = (255, 255, 255)
+# thickness = 2
+
 def gen_frames(camera):
+    font = cv2.FONT_HERSHEY_SIMPLEX     
+    org = [10, 30]
+    fontScale = 0.7
+    text_color = (255, 255, 255)
+    face_border_color = (255, 255, 255)
+    thickness = 2
+
     if not camera.isOpened:
         print('--(!)Error opening video capture')
         exit(0)
@@ -66,7 +80,7 @@ def gen_frames(camera):
 
         temp_frame = frame
 
-        frame, faceROI = detectAndDisplay(frame)
+        frame, faceROI, faces = detectAndDisplay(frame)
         if faceROI is not None:
             faceROI = cv2.resize(faceROI, dsize=(48, 48), interpolation=cv2.INTER_LINEAR).astype(np.uint8)
             faceROI = faceROI[:, :, np.newaxis]
@@ -87,29 +101,25 @@ def gen_frames(camera):
             score = score.tolist()
             score = list(map(lambda x: '{:.3f}'.format(x), score))
 
-            # font
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            
-            # org
-            org = (10, 100)
-            
-            # fontScale
-            fontScale = 0.7
-            
-            # Blue color in BGR
-            color = (255, 255, 255)
-            
-            # Line thickness of 2 px
-            thickness = 2
+            score_dict = dict(zip(class_names, score))
+
+            for key in score_dict.keys():
+                if class_names[predicted] == key:
+                    text_color = (50, 255, 50)
+                cv2.putText(frame, key, org, font, fontScale, text_color, thickness, cv2.LINE_AA)
+                org[0] = 150
+                cv2.putText(frame, score_dict[key], org, font, fontScale, text_color, thickness, cv2.LINE_AA)
+                org[1] += 30
+                org[0] = 10
+                text_color = (255, 255, 255)
+            org = [10, 30]
 
             if class_names[predicted] == 'Happy':
-                frames.append(temp_frame)
-                color = (50, 255, 50)
+                face_border_color = (50, 255, 50)
 
-            
-            cv2.putText(frame, ' '.join(score), org, font, fontScale, color, thickness, cv2.LINE_AA)
-
-            # print(f"score: {score}\npredicted: {class_names[predicted]}")
+            (x,y,w,h) = faces[0]
+            frame = cv2.rectangle(frame, (x, y), (x+w, y+h), face_border_color, 2)
+            face_border_color = (255, 255, 255)
 
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
