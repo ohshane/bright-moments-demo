@@ -66,7 +66,7 @@ def gen_frames(camera):
 
         temp_frame = frame
 
-        frame, faceROI = detectAndDisplay(frame)
+        frame, faceROI, faces = detectAndDisplay(frame)
         if faceROI is not None:
             faceROI = cv2.resize(faceROI, dsize=(48, 48), interpolation=cv2.INTER_LINEAR).astype(np.uint8)
             faceROI = faceROI[:, :, np.newaxis]

@@ -29,6 +29,7 @@ trans = transforms.Compose([
 
 uri = None
 name = None
+noise = False
 
 camera = cv2.VideoCapture(uri)
 # uri: http://192.168.0.44:81/stream
@@ -53,14 +54,8 @@ net.eval()
 frames = []
 temp_frame = None
 
-# cv2.putText
-# font = cv2.FONT_HERSHEY_SIMPLEX     
-# org = [10, 50]
-# fontScale = 0.7
-# color = (255, 255, 255)
-# thickness = 2
-
 def gen_frames(camera):
+    # for cv2.putText
     font = cv2.FONT_HERSHEY_SIMPLEX     
     org = [10, 30]
     fontScale = 0.7
@@ -78,19 +73,19 @@ def gen_frames(camera):
             print('--(!) No captured frame -- Break!')
             break
 
-        temp_frame = frame
-
-        frame, faceROI, faces = detectAndDisplay(frame)
+        frame, faceROI, faces = detectAndDisplay(frame, noise=noise)
         if faceROI is not None:
+            (x,y,w,h) = faces[0]
+            
             faceROI = cv2.resize(faceROI, dsize=(48, 48), interpolation=cv2.INTER_LINEAR).astype(np.uint8)
             faceROI = faceROI[:, :, np.newaxis]
             faceROI = np.concatenate((faceROI, faceROI, faceROI), axis=2)
             faceROI = Image.fromarray(faceROI)
             inputs = transform_test(faceROI)
 
-            ncrops, c, h, w = np.shape(inputs)
+            ncrops, channel, height, width = np.shape(inputs)
 
-            inputs = inputs.view(-1, c, h, w)
+            inputs = inputs.view(-1, channel, height, width)
             inputs = inputs.cuda()
             inputs = Variable(inputs, volatile=True)
             outputs = net(inputs)
@@ -117,8 +112,7 @@ def gen_frames(camera):
             if class_names[predicted] == 'Happy':
                 face_border_color = (50, 255, 50)
 
-            (x,y,w,h) = faces[0]
-            frame = cv2.rectangle(frame, (x, y), (x+w, y+h), face_border_color, 2)
+            frame = cv2.rectangle(frame, (x, y), (x+w, y+h), face_border_color, 1)
             face_border_color = (255, 255, 255)
 
         ret, buffer = cv2.imencode('.jpg', frame)
@@ -135,11 +129,14 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        global uri, name
+        global uri, name, noise
         uri = request.values.get('uri')
         name = request.values.get('name')
+        noise = request.form.get('noise')
         if uri == '0':
             uri = 0
+        if noise == 'off':
+            noise = False
         return redirect('/')
     return render_template('register.html')
 

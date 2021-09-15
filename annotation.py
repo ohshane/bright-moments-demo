@@ -3,13 +3,61 @@ import cv2 as cv
 import argparse
 
 
-def detectAndDisplay(frame):
+def detectAndDisplay(frame, noise=False):
     frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     frame_gray = cv.equalizeHist(frame_gray)
     #-- Detect faces
     faces = face_cascade.detectMultiScale(frame_gray)
     faceROI = None
+    if noise == 'upper-block':
+        for (x,y,w,h) in faces:
+            frame = cv.rectangle(frame, (x, y), (x+w, y+int(h/2)), (0,0,0), -1)
+            break
+    elif noise == 'under-block':
+        for (x,y,w,h) in faces:
+            frame = cv.rectangle(frame, (x, y+int(h/2)), (x+w, y+h), (0,0,0), -1)
+            break
+    elif noise == 'eye-block':
+        for (x,y,w,h) in faces:
+            frame = cv.rectangle(frame, (x, y+int(h/3)), (x+w, y+int(h/2)), (0,0,0), -1)
+            break
+    elif noise == 'nose-block':
+        for (x,y,w,h) in faces:
+            frame = cv.rectangle(frame, (x, y+int(h/2)), (x+w, y+int(h*2/3)), (0,0,0), -1)
+            break
+    elif noise == 'mouth-block':
+        for (x,y,w,h) in faces:
+            frame = cv.rectangle(frame, (x, y+int(h*2/3)), (x+w, y+h), (0,0,0), -1)
+            break
+    elif noise == 'upper-gaussian':
+        for (x,y,w,h) in faces:
+            blurred = cv.GaussianBlur(frame, (25,25), 0)
+            frame[y:y+int(h/2),x:x+w] = blurred[y:y+int(h/2),x:x+w]
+            break
+    elif noise == 'under-gaussian':
+        for (x,y,w,h) in faces:
+            blurred = cv.GaussianBlur(frame, (25,25), 0)
+            frame[y+int(h/2):y+h,x:x+w] = blurred[y+int(h/2):y+h,x:x+w]
+            break
+    elif noise == 'eye-gaussian':
+        for (x,y,w,h) in faces:
+            blurred = cv.GaussianBlur(frame, (25,25), 0)
+            frame[y+int(h/3):y+int(h/2),x:x+w] = blurred[y+int(h/3):y+int(h/2),x:x+w]
+            break
+    elif noise == 'nose-gaussian':
+        for (x,y,w,h) in faces:
+            blurred = cv.GaussianBlur(frame, (25,25), 0)
+            frame[y+int(h/2):y+int(h*2/3),x:x+w] = blurred[y+int(h/2):y+int(h*2/3),x:x+w]
+            break
+    elif noise == 'mouth-gaussian':
+        for (x,y,w,h) in faces:
+            blurred = cv.GaussianBlur(frame, (25,25), 0)
+            frame[y+int(h*2/3):y+h,x:x+w] = blurred[y+int(h*2/3):y+h,x:x+w]
+            break
+
     for (x,y,w,h) in faces:
+        frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        frame_gray = cv.equalizeHist(frame_gray)
         # frame = cv.rectangle(frame, (x, y), (x+w, y+h), (0,255,0), 1)
         faceROI = frame_gray[y:y+h,x:x+w]
     return frame, faceROI, faces

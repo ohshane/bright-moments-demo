@@ -9,8 +9,28 @@
 {% block content %}
   <h1>Register</h1>
   <form action="{{ url_for('register') }}" method="POST">
-      URI <input type="text" name="uri" value=""><br>
-      Name <input type="text" name="name" value=""><br>
-      <input type="submit" value="Submit">
+    <div class="row">
+      <div class="input">
+        <span>URI</span><input type="text" name="uri" value="">
+      </div>
+      <div class="input">
+        <span>Name</span><input type="text" name="name" value="">
+      </div>
+    </div>
+    <div class="row">
+      <span>Noise</span>
+      <input type="radio" name="noise" value="off" checked="checked">Off
+      <input type="radio" name="noise" value="upper-block">Upper block
+      <input type="radio" name="noise" value="under-block">Under block
+      <input type="radio" name="noise" value="eye-block">Eye block
+      <input type="radio" name="noise" value="nose-block">Nose block
+      <input type="radio" name="noise" value="mouth-block">Mouth block
+      <input type="radio" name="noise" value="upper-gaussian">Upper gaussian
+      <input type="radio" name="noise" value="under-gaussian">Under gaussian
+      <input type="radio" name="noise" value="eye-gaussian">Eye gaussian
+      <input type="radio" name="noise" value="nose-gaussian">Nose gaussian
+      <input type="radio" name="noise" value="mouth-gaussian">Mouth gaussian
+    </div>
+    <input type="submit" value="Submit">
   </form>
 {% endblock %}
