@@ -12,6 +12,10 @@ import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
 from torchvision.transforms import transforms
+# from torchsummary import summary
+
+from pytorch_grad_cam import GradCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM
+from pytorch_grad_cam.utils.image import show_cam_on_image
 
 from annotation import detectAndDisplay
 from model.FER2013_VGG19.VGG import VGG
@@ -26,6 +30,16 @@ trans = transforms.Compose([
     transforms.Resize((48, 48)),   
     transforms.ToTensor(),
 ])
+
+target_layer = model.features.__getitem__(0)
+
+gradcam = GradCAM(model=model, target_layer=target_layer, use_cuda=True)
+scorecam = ScoreCAM(model=model, target_layer=target_layer, use_cuda=True)
+gradcamplusplus = GradCAMPlusPlus(model=model, target_layer=target_layer, use_cuda=True)
+ablationcam = AblationCAM(model=model, target_layer=target_layer, use_cuda=True)
+xgradcam = XGradCAM(model=model, target_layer=target_layer, use_cuda=True)
+eigencam = EigenCAM(model=model, target_layer=target_layer, use_cuda=True)
+cams = [gradcam, scorecam, gradcamplusplus, ablationcam, xgradcam, eigencam]
 
 uri = None
 name = None
@@ -50,6 +64,7 @@ checkpoint = torch.load(root_dir / 'model' / 'FER2013_VGG19' / 'PrivateTest_mode
 net.load_state_dict(checkpoint['net'])
 net.cuda()
 net.eval()
+# print(summary(net, (3, 44, 44)))
 
 frames = []
 temp_frame = None
@@ -67,7 +82,7 @@ def gen_frames(camera):
         print('--(!)Error opening video capture')
         exit(0)
     while True:
-        time.sleep(0.05)
+        # time.sleep(1)
         success, frame = camera.read()
         if not success:
             print('--(!) No captured frame -- Break!')
@@ -75,6 +90,7 @@ def gen_frames(camera):
 
         frame, faceROI, faces = detectAndDisplay(frame, noise=noise)
         if faceROI is not None:
+            gradcam_input = None
             (x,y,w,h) = faces[0]
             
             faceROI = cv2.resize(faceROI, dsize=(48, 48), interpolation=cv2.INTER_LINEAR).astype(np.uint8)
@@ -91,6 +107,12 @@ def gen_frames(camera):
             outputs = net(inputs)
             outputs_avg = outputs.view(ncrops, -1).mean(0)
 
+            # grayscale_cam = gradcam(input_tensor=inputs)
+            # grayscale_cam = grayscale_cam[0, :]
+
+            # visualization_cam = show_cam_on_image(inputs, grayscale_cam)
+            # print(visualization_cam)
+
             score = F.softmax(outputs_avg)
             _, predicted = torch.max(outputs_avg.data, 0)
             score = score.tolist()
@@ -98,8 +120,18 @@ def gen_frames(camera):
 
             score_dict = dict(zip(class_names, score))
 
+            # 3-class
+            temp_dict = {}
+            temp_dict['Happy'] = score_dict['Happy']
+            temp_dict['Neutral'] = score_dict['Neutral']
+            temp_dict['Others'] = '{:.3f}'.format(1 - (float(score_dict['Happy']) + float(score_dict['Neutral'])))
+            score_dict = temp_dict
+            
+
             for key in score_dict.keys():
                 if class_names[predicted] == key:
+                    text_color = (50, 255, 50)
+                elif key == 'Others' and class_names[predicted] in ['Angry', 'Disgust', 'Fear', 'Sad', 'Surprise']:
                     text_color = (50, 255, 50)
                 cv2.putText(frame, key, org, font, fontScale, text_color, thickness, cv2.LINE_AA)
                 org[0] = 110
