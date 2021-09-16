@@ -94,7 +94,7 @@ def gen_frames(camera):
             org = (10, 100)
             
             # fontScale
-            fontScale = 0.7
+            fontScale = 1
             
             # Blue color in BGR
             color = (255, 255, 255)

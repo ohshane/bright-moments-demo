@@ -102,8 +102,11 @@ def gen_frames(camera):
                 if class_names[predicted] == key:
                     text_color = (50, 255, 50)
                 cv2.putText(frame, key, org, font, fontScale, text_color, thickness, cv2.LINE_AA)
-                org[0] = 150
+                org[0] = 110
                 cv2.putText(frame, score_dict[key], org, font, fontScale, text_color, thickness, cv2.LINE_AA)
+                cv2.rectangle(frame, (org[0]+90, org[1]-15), (org[0]+190, org[1]), (255,255,255), 2)
+                cv2.rectangle(frame, (org[0]+90, org[1]-15), (org[0]+90+int(float(score_dict[key])*100), org[1]), (255,255,255), -1)
+                score_dict[key] * 100
                 org[1] += 30
                 org[0] = 10
                 text_color = (255, 255, 255)
