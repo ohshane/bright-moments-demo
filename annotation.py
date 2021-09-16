@@ -9,6 +9,7 @@ def detectAndDisplay(frame, noise=False):
     #-- Detect faces
     faces = face_cascade.detectMultiScale(frame_gray)
     faceROI = None
+    
     if noise == 'upper-block':
         for (x,y,w,h) in faces:
             frame = cv.rectangle(frame, (x, y), (x+w, y+int(h/2)), (0,0,0), -1)
