@@ -29,6 +29,7 @@ trans = transforms.Compose([
 
 uri = None
 name = None
+noise = False
 
 camera = cv2.VideoCapture(uri)
 # uri: http://192.168.0.44:81/stream
@@ -59,7 +60,7 @@ def gen_frames(camera):
         print('--(!)Error opening video capture')
         exit(0)
     while True:
-        time.sleep(0.05)
+        # time.sleep(0.05)
         success, frame = camera.read()
         if not success:
             print('--(!) No captured frame -- Break!')
@@ -127,11 +128,14 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        global uri, name
+        global uri, name, noise
         uri = request.values.get('uri')
         name = request.values.get('name')
+        noise = request.form.get('noise')
         if uri == '0':
             uri = 0
+        if noise == 'off':
+            noise = False
         return redirect('/')
     return render_template('register.html')
 
@@ -146,6 +150,11 @@ def video_feed():
     global uri
     camera = cv2.VideoCapture(uri)
     return Response(gen_frames(camera), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
